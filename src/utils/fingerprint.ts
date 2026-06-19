@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 import { hostname, platform, arch } from "node:os";
 
-export function generateFingerprint(): string {
+/**
+ * Generate a 64-char hex fingerprint from machine characteristics.
+ * Idempotent: same machine always produces the same value.
+ */
+export function getFingerprint(): string {
   const data = `${hostname()}-${platform()}-${arch()}`;
-  return createHash("sha256").update(data).digest("hex").slice(0, 32);
+  return createHash("sha256").update(data).digest("hex");
 }

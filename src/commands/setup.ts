@@ -1,8 +1,8 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir, userInfo } from "node:os";
+import { userInfo } from "node:os";
 import { detectAllApps } from "../detectors/index.js";
-import { generateFingerprint } from "../utils/fingerprint.js";
+import { getFingerprint, CONFIG_DIR, CONFIG_PATH, saveConfig } from "../config.js";
 import type { DetectionReport } from "../detectors/types.js";
 
 export async function setup(): Promise<void> {
@@ -14,8 +14,8 @@ export async function setup(): Promise<void> {
   console.log("🔍 正在扫描已安装的 AI 应用...\n");
 
   const apps = detectAllApps();
-  const fingerprint = generateFingerprint();
-  
+  const fingerprint = getFingerprint();
+
   if (apps.length === 0) {
     console.log("ℹ️  未检测到任何已安装的 AI 应用。");
     console.log("   请先安装以下应用之一：");
@@ -24,7 +24,7 @@ export async function setup(): Promise<void> {
     console.log("   - OpenClaw (配置路径: ~/.openclaw/config.yaml)");
   } else {
     console.log(`✅ 检测到 ${String(apps.length)} 个应用：\n`);
-    
+
     for (const app of apps) {
       console.log(`  📦 ${app.name}`);
       if (app.version) {
@@ -43,12 +43,14 @@ export async function setup(): Promise<void> {
     fingerprint,
   };
 
-  const configDir = join(homedir(), ".tokenmofang");
-  await mkdir(configDir, { recursive: true });
-  
-  const reportPath = join(configDir, "detection-report.json");
+  await mkdir(CONFIG_DIR, { recursive: true });
+
+  const reportPath = join(CONFIG_DIR, "detection-report.json");
   await writeFile(reportPath, JSON.stringify(report, null, 2));
-  
+
+  // Also write the runtime config for list / other commands
+  await saveConfig(CONFIG_PATH, { fingerprint });
+
   console.log(`💾 检测报告已保存到: ${reportPath}`);
   console.log(`🔑 客户端指纹: ${fingerprint}`);
 }
