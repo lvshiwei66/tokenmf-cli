@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 
 export { getFingerprint } from "./utils/fingerprint.js";
@@ -18,7 +18,7 @@ export async function saveConfig(
   filePath: string,
   config: CliConfig,
 ): Promise<void> {
-  const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+  const dir = dirname(filePath);
   await mkdir(dir, { recursive: true });
   await writeFile(filePath, JSON.stringify(config, null, 2), "utf-8");
 }
