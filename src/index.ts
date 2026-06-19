@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { setup } from "./commands/setup.js";
 import { listAction } from "./commands/list.js";
 import { getConfig, getApiUrl, CONFIG_PATH } from "./config.js";
+import { useCommand } from "./commands/use.js";
 
 export function createProgram() {
   const program = new Command();
@@ -16,16 +17,27 @@ export function createProgram() {
     .option("-d, --debug", "输出调试信息");
 
   program
-    .command("setup")
-    .description("扫描已安装的 AI 应用并生成检测报告")
-    .action(async () => {
-      try {
-        await setup();
-      } catch (error) {
-        console.error("❌ Setup 失败:", error);
-        process.exit(1);
-      }
-    });
+    .command("use <provider>")
+    .description("切换指定 AI 应用的提供商和模型")
+    .option("-k, --key <api-key>", "API Key")
+    .option("-m, --model <model>", "模型名称")
+    .option("-a, --app <app>", "目标应用（codex、claude-code、openclaw）")
+    .action(
+      async (
+        provider: string,
+        options: { key?: string; model?: string; app?: string },
+      ) => {
+        try {
+          await useCommand(provider, options);
+        } catch (error) {
+          console.error(
+            "❌ 错误:",
+            error instanceof Error ? error.message : String(error),
+          );
+          process.exit(1);
+        }
+      },
+    );
 
   program
     .command("list")
