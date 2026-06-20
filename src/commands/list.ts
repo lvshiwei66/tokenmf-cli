@@ -30,7 +30,7 @@ function formatModels(models: string[], modelCount: number): string {
 function formatTable(items: ProviderListItem[], total: number, all: boolean): string {
   const table = new Table({
     head: ["名称", "延迟", "价格", "模型", "描述", "标签"],
-    style: { head: [], border: [] },
+    style: { head: [], border: [], compact: true },
     colWidths: [16, 10, 10, 30, 28, 18],
     wordWrap: false,
   });
