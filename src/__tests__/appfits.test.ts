@@ -96,6 +96,20 @@ api_key = "sk-old"
   });
 });
 
+describe("Appfit requiredProtocol()", () => {
+  it("codex returns openai", () => {
+    expect(codexAppfit.requiredProtocol()).toBe("openai");
+  });
+
+  it("claude-code returns anthropic", () => {
+    expect(claudeCodeAppfit.requiredProtocol()).toBe("anthropic");
+  });
+
+  it("openclaw returns undefined", () => {
+    expect(openclawAppfit.requiredProtocol()).toBeUndefined();
+  });
+});
+
 describe("Claude Code Appfit", () => {
   let tmpDir: string;
 
