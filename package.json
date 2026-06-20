@@ -4,14 +4,12 @@
   "private": true,
   "type": "module",
   "bin": {
-    "tmf": "./dist/index.js"
+    "tmf": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
-    "lint": "eslint src/",
-    "format": "prettier --write src/",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "cli-table3": "^0.6.5",
