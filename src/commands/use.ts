@@ -61,7 +61,7 @@ function resolveModel(
   return undefined;
 }
 
-function selectApp(
+export function selectApp(
   providedApp: string | undefined,
   apps: AppConfig[],
 ): AppConfig {
