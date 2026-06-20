@@ -4,12 +4,12 @@ import type { ProviderDetail } from "../types/provider.js";
 
 const mockDetail: ProviderDetail = {
   name: "packcode",
-  intro: "深度求索 DeepSeek V4 旗舰模型。适合代码生成与推理任务。",
+  intro: "DeepSeek V4 flagship model. Suitable for code generation and reasoning tasks.",
   website: "https://platform.deepseek.com",
   urls: { default: "https://api.deepseek.com/openai", openai: "https://api.deepseek.com/openai" },
   defaultModel: "deepseek-v4-pro",
   models: ["deepseek-v4-pro", "deepseek-v4-lite"],
-  updated_at: "2026年6月19日 16:30",
+  updated_at: "Jun 19, 2026 16:30",
 };
 
 let mockResult: ProviderDetail | { code: string; message: string; statusCode?: number } = mockDetail;
@@ -48,49 +48,49 @@ describe("askAction", () => {
 
     const output = stdout.join("\n");
     expect(output).toContain("🔍 packcode");
-    expect(output).toContain("简介：深度求索 DeepSeek V4 旗舰模型。适合代码生成与推理任务。");
-    expect(output).toContain("网址：https://platform.deepseek.com");
-    expect(output).toContain("默认模型：deepseek-v4-pro");
-    expect(output).toContain("API 地址 (default)：https://api.deepseek.com/openai");
-    expect(output).toContain("可用模型：deepseek-v4-pro, deepseek-v4-lite");
-    expect(output).toContain("数据更新：2026年6月19日 16:30");
+    expect(output).toContain("Intro: DeepSeek V4 flagship model. Suitable for code generation and reasoning tasks.");
+    expect(output).toContain("Website: https://platform.deepseek.com");
+    expect(output).toContain("Default model: deepseek-v4-pro");
+    expect(output).toContain("API URL (default): https://api.deepseek.com/openai");
+    expect(output).toContain("Available models: deepseek-v4-pro, deepseek-v4-lite");
+    expect(output).toContain("Updated: Jun 19, 2026 16:30");
   });
 
   it("shows 404 error for unknown provider", async () => {
-    mockResult = { code: "NOT_FOUND", message: "❌ 未找到供应商: unknown" };
+    mockResult = { code: "NOT_FOUND", message: "❌ Provider not found: unknown" };
 
     await askAction("unknown", {
       getConfig: () => Promise.resolve(null),
       getApiUrl: () => "https://test.api",
     }, { debug: false });
 
-    expect(stderr.join("\n")).toContain("未找到供应商: unknown");
+    expect(stderr.join("\n")).toContain("Provider not found: unknown");
   });
 
   it("shows network error on fetch failure", async () => {
-    mockResult = { code: "NETWORK", message: "❌ 请检查网络连接" };
+    mockResult = { code: "NETWORK", message: "❌ Please check network connection" };
 
     await askAction("packcode", {
       getConfig: () => Promise.resolve(null),
       getApiUrl: () => "https://test.api",
     }, { debug: false });
 
-    expect(stderr.join("\n")).toContain("请检查网络连接");
+    expect(stderr.join("\n")).toContain("Please check network connection");
   });
 
   it("shows 429 rate limit error", async () => {
-    mockResult = { code: "RATE_LIMITED", message: "❌ 请求过于频繁，请稍后重试" };
+    mockResult = { code: "RATE_LIMITED", message: "❌ Too many requests, please try again later" };
 
     await askAction("packcode", {
       getConfig: () => Promise.resolve(null),
       getApiUrl: () => "https://test.api",
     }, { debug: false });
 
-    expect(stderr.join("\n")).toContain("请求过于频繁");
+    expect(stderr.join("\n")).toContain("Too many requests");
   });
 
   it("outputs debug info when --debug is set", async () => {
-    mockResult = { code: "SERVER_ERROR", message: "❌ 服务异常（状态码: 500），请稍后重试", statusCode: 500 };
+    mockResult = { code: "SERVER_ERROR", message: "❌ Service error (status: 500), please try again later", statusCode: 500 };
 
     await askAction("packcode", {
       getConfig: () => Promise.resolve(null),
@@ -120,8 +120,8 @@ describe("askAction", () => {
 
     const output = stdout.join("\n");
     expect(output).toContain("🔍 minimal");
-    expect(output).not.toContain("简介：");
-    expect(output).not.toContain("网址：");
-    expect(output).not.toContain("默认模型：");
+    expect(output).not.toContain("Intro:");
+    expect(output).not.toContain("Website:");
+    expect(output).not.toContain("Default model:");
   });
 });

@@ -74,7 +74,7 @@ export function selectApp(
     if (!app) {
       const names = apps.map((a) => a.name).join("、");
       throw new Error(
-        `未找到应用 "${providedApp}"。已安装的应用：${names || "无"}`,
+        `Application "${providedApp}" not found. Installed apps: ${names || "none"}`,
       );
     }
     return app;
@@ -82,7 +82,7 @@ export function selectApp(
 
   if (apps.length === 0) {
     throw new Error(
-      "未检测到任何已安装的 AI 应用。请先安装 Codex、Claude Code 或 OpenClaw。",
+      "No installed AI applications detected. Please install Codex, Claude Code, or OpenClaw first.",
     );
   }
 
@@ -92,7 +92,7 @@ export function selectApp(
 
   const names = apps.map((a) => a.name).join("、");
   throw new Error(
-    `检测到多个应用（${names}），请使用 --app 指定目标应用。`,
+    `Multiple applications detected (${names}). Use --app to specify the target application.`,
   );
 }
 
@@ -110,10 +110,10 @@ export async function useCommand(
   let apiKey = options.key ?? memory?.apiKey;
   if (!apiKey) {
     const currentHint = memory?.apiKey
-      ? ` [当前: ${"*".repeat(8)}]`
+      ? ` [current: ${"*".repeat(8)}]`
       : "";
     const prompt =
-      `请输入 ${provider} 的 API Key${currentHint}（输入隐藏）：`;
+      `Enter API Key for ${provider}${currentHint} (input hidden): `;
     apiKey = await promptHidden(prompt);
     if (!apiKey && memory?.apiKey) {
       apiKey = memory.apiKey; // Enter pressed, keep existing
@@ -121,7 +121,7 @@ export async function useCommand(
   }
 
   if (!apiKey) {
-    throw new Error("未提供 API Key，操作取消。");
+    throw new Error("No API Key provided, operation cancelled.");
   }
 
   // 3. Resolve providerInfo: memory has urls → use it; otherwise ask API
@@ -140,7 +140,7 @@ export async function useCommand(
     const cid = clientId ?? "unknown";
     const result = await fetchProviderInfo(apiUrl, cid, provider);
     if ("code" in result) {
-      throw new Error(`无法获取 Provider "${provider}" 的信息。${result.message}`);
+      throw new Error(`Cannot get info for Provider "${provider}". ${result.message}`);
     }
     providerInfo = result;
   }
@@ -155,7 +155,7 @@ export async function useCommand(
   // 6. Load Appfit
   const appfit = getAppfit(app.name);
   if (!appfit) {
-    throw new Error(`不支持的应用：${app.name}`);
+    throw new Error(`Unsupported application: ${app.name}`);
   }
 
 
@@ -163,12 +163,12 @@ export async function useCommand(
   const protocol = appfit.requiredProtocol() ?? "default";
   const resolvedUrl = providerInfo.urls[protocol] ?? providerInfo.urls["default"];
   if (!resolvedUrl) {
-    throw new Error(`Provider "${provider}" 缺少 "${protocol}" 协议的 URL。`);
+    throw new Error(`Provider "${provider}" missing URL for "${protocol}" protocol.`);
   }
 
   // 7. Backup config files
   const configPaths = appfit.resolveConfigPaths(app.path);
-  console.log("⏳ 正在备份设置...");
+  console.log("⏳ Backing up settings...");
   for (const configPath of configPaths) {
     try {
       await copyFile(configPath, configPath + ".bak");
@@ -189,7 +189,7 @@ export async function useCommand(
     await appfit.apply(app.path, params);
   } catch (error) {
     throw new Error(
-      `修改 ${app.name} 配置失败：${error instanceof Error ? error.message : String(error)}`,
+      `Failed to modify ${app.name} config: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 
@@ -203,8 +203,8 @@ export async function useCommand(
   await saveSettings(settings);
 
   // 10. Success
-  const modelNote = model ? `，模型：${model}` : "";
+  const modelNote = model ? `, model: ${model}` : "";
   console.log(
-    `✅ 已将 ${app.name} 切换至 ${provider}${modelNote}。请重启应用以生效。`,
+    `✅ Switched ${app.name} to ${provider}${modelNote}. Please restart the application.`,
   );
 }

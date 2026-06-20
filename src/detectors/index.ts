@@ -19,7 +19,7 @@ export function detectAllApps(): AppConfig[] {
         apps.push(app);
       }
     } catch (error) {
-      console.error(`检测 ${detector.name} 失败:`, error);
+      console.error(`Detection ${detector.name} failed:`, error);
     }
   }
 

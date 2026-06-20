@@ -59,9 +59,9 @@ const mockProviderInfos: Record<
     },
     defaultModel: "deepseek-v4-pro",
     models: ["deepseek-v4-pro"],
-    intro: "深度求索",
+    intro: "DeepSeek",
     website: "https://platform.deepseek.com",
-    updated_at: "2026年6月19日 16:30",
+    updated_at: "Jun 19, 2026 16:30",
   },
   openai: {
     urls: {
@@ -72,14 +72,14 @@ const mockProviderInfos: Record<
     models: ["gpt-5.1", "gpt-5.1-mini"],
     intro: "OpenAI GPT",
     website: "https://platform.openai.com",
-    updated_at: "2026年6月19日 16:30",
+    updated_at: "Jun 19, 2026 16:30",
   },
 };
 
 vi.mock("../providers/api.js", () => ({
   fetchProviderInfo: vi.fn(async (_apiUrl: string, _clientId: string, name: string) => {
     const info = mockProviderInfos[name];
-    if (!info) return { code: "NOT_FOUND", message: `未找到供应商: ${name}` };
+    if (!info) return { code: "NOT_FOUND", message: `Provider not found: ${name}` };
     return { name, ...info };
   }),
 }));
@@ -193,7 +193,7 @@ describe("use command — E2E", () => {
         expect(auth.OPENAI_API_KEY).toBe("sk-test-key");
 
         // Success message
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("codex");
         expect(successMsg).toContain("packcode");
       } finally {
@@ -279,7 +279,7 @@ describe("use command — E2E", () => {
         expect(result.otherSetting).toBe("keep-me");
 
         // Success message
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("claude-code");
         expect(successMsg).toContain("packcode");
       } finally {
@@ -360,7 +360,7 @@ describe("use command — E2E", () => {
         expect(result.other_setting).toBe("keep-me");
 
         // Success message
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("openclaw");
         expect(successMsg).toContain("openai");
       } finally {
@@ -431,7 +431,7 @@ describe("use command — E2E", () => {
         expect(fetchProviderInfo).not.toHaveBeenCalled();
 
         // Success message should still appear
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("codex");
       } finally {
         restore();
@@ -726,7 +726,7 @@ describe("use command — E2E", () => {
       try {
         await useCommand("packcode", { key: "sk-test-key" }, TEST_API_URL, TEST_CLIENT_ID);
 
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("codex");
         expect(successMsg).toContain("packcode");
       } finally {
@@ -739,7 +739,7 @@ describe("use command — E2E", () => {
 
       await expect(
         useCommand("packcode", { key: "sk-test", app: "claude-code" }, TEST_API_URL, TEST_CLIENT_ID),
-      ).rejects.toThrow(/未找到应用/);
+      ).rejects.toThrow(/not found/);
     });
 
     it("throws when multiple apps and no --app", async () => {
@@ -752,7 +752,7 @@ describe("use command — E2E", () => {
 
         await expect(
           useCommand("packcode", { key: "sk-test" }, TEST_API_URL, TEST_CLIENT_ID),
-        ).rejects.toThrow(/多个应用/);
+        ).rejects.toThrow(/Multiple/);
       } finally {
         try {
           rmSync(appDir2, { recursive: true, force: true });
@@ -767,7 +767,7 @@ describe("use command — E2E", () => {
 
       await expect(
         useCommand("packcode", { key: "sk-test" }, TEST_API_URL, TEST_CLIENT_ID),
-      ).rejects.toThrow(/未检测到任何已安装的 AI 应用/);
+      ).rejects.toThrow(/No installed/);
     });
   });
 
@@ -809,7 +809,7 @@ describe("use command — E2E", () => {
           app: "codex",
         }, TEST_API_URL, TEST_CLIENT_ID);
 
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("codex");
 
         // Only codex should be modified
@@ -833,7 +833,7 @@ describe("use command — E2E", () => {
           model: "gpt-5.1-mini",
         }, TEST_API_URL, TEST_CLIENT_ID);
 
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("claude-code");
         expect(successMsg).toContain("openai");
 
@@ -865,7 +865,7 @@ describe("use command — E2E", () => {
     it("throws for unknown provider", async () => {
       await expect(
         useCommand("nonexistent", { key: "sk-test", app: "codex" }, TEST_API_URL, TEST_CLIENT_ID),
-      ).rejects.toThrow(/无法获取 Provider/);
+      ).rejects.toThrow(/Cannot get/);
     });
 
     it("throws when ask API fails for unknown provider", async () => {
@@ -877,7 +877,7 @@ describe("use command — E2E", () => {
           key: "sk-test",
           app: "codex",
         }, TEST_API_URL, TEST_CLIENT_ID),
-      ).rejects.toThrow(/无法获取 Provider/);
+      ).rejects.toThrow(/Cannot get/);
     });
 
     it("throws when no API key provided and no memory", async () => {
@@ -890,7 +890,7 @@ describe("use command — E2E", () => {
     it("provides Chinese error messages", async () => {
       await expect(
         useCommand("nonexistent", { key: "sk-test", app: "codex" }, TEST_API_URL, TEST_CLIENT_ID),
-      ).rejects.toThrow(/无法获取 Provider/);
+      ).rejects.toThrow(/Cannot get/);
     });
 
     it("throws when app name is not in appfit registry", async () => {
@@ -907,7 +907,7 @@ describe("use command — E2E", () => {
 
       await expect(
         useCommand("packcode", { key: "sk-test", app: "unknown-app" }, TEST_API_URL, TEST_CLIENT_ID),
-      ).rejects.toThrow(/不支持的应用/);
+      ).rejects.toThrow(/Unsupported/);
     });
   });
 
@@ -931,9 +931,9 @@ describe("use command — E2E", () => {
           app: "codex",
         }, TEST_API_URL, TEST_CLIENT_ID);
 
-        const successMsg = logs.find((l) => l.includes("已"));
+        const successMsg = logs.find((l) => l.includes("Switched"));
         expect(successMsg).toContain("deepseek-v4-pro");
-        expect(successMsg).toContain("模型：deepseek-v4-pro");
+        expect(successMsg).toContain("model: deepseek-v4-pro");
       } finally {
         restore();
       }
@@ -948,8 +948,8 @@ describe("use command — E2E", () => {
         }, TEST_API_URL, TEST_CLIENT_ID);
 
         // Falls back to provider default model
-        const successMsg = logs.find((l) => l.includes("已"));
-        expect(successMsg).toContain("模型：deepseek-v4-pro");
+        const successMsg = logs.find((l) => l.includes("Switched"));
+        expect(successMsg).toContain("model: deepseek-v4-pro");
       } finally {
         restore();
       }
@@ -963,8 +963,8 @@ describe("use command — E2E", () => {
           app: "codex",
         }, TEST_API_URL, TEST_CLIENT_ID);
 
-        const successMsg = logs.find((l) => l.includes("已"));
-        expect(successMsg).toContain("重启");
+        const successMsg = logs.find((l) => l.includes("Switched"));
+        expect(successMsg).toContain("restart");
       } finally {
         restore();
       }

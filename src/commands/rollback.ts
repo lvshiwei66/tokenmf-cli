@@ -13,7 +13,7 @@ export async function rollbackCommand(
   // 2. Load Appfit
   const appfit = getAppfit(app.name);
   if (!appfit) {
-    throw new Error(`不支持的应用：${app.name}`);
+    throw new Error(`Unsupported application: ${app.name}`);
   }
 
   // 3. Resolve config paths and restore from .bak
@@ -37,14 +37,14 @@ export async function rollbackCommand(
       restoredCount++;
     } catch {
       throw new Error(
-        `恢复 ${configPath} 失败：备份文件存在但恢复出错`,
+        `Restore ${configPath} failed: backup exists but restore error`,
       );
     }
   }
 
   // 4. Check results
   if (restoredCount === 0) {
-    throw new Error("错误：应用设置备份丢失，恢复失败");
+    throw new Error("Error: application settings backup lost, restore failed");
   }
 
   // 5. Delete .bak files (only after all copies succeeded)
@@ -54,12 +54,12 @@ export async function rollbackCommand(
 
   if (missingCount > 0) {
     console.warn(
-      `⚠ 部分备份文件缺失（${missingCount}/${configPaths.length}），已恢复其余文件。`,
+      `⚠ Some backup files missing (${missingCount}/${configPaths.length}), restored remaining files.`,
     );
   }
 
   // 6. Success
   console.log(
-    `✅ 已将 ${app.name} 配置恢复至备份版本。请重启应用以生效。`,
+    `✅ ${app.name} config restored to backup version. Please restart the application.`,
   );
 }

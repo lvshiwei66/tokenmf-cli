@@ -17,22 +17,22 @@ async function doFetch(
 
 function classifyError(err: unknown, statusCode?: number): ApiError {
   if (err instanceof TypeError && err.message.includes("fetch")) {
-    return { code: "NETWORK", message: "\u274c 请检查网络连接" };
+    return { code: "NETWORK", message: "\u274c Please check network connection" };
   }
   if (statusCode === 404) {
     return { code: "NOT_FOUND", message: "" }; // caller sets name
   }
   if (statusCode === 429) {
-    return { code: "RATE_LIMITED", message: "\u274c 请求过于频繁，请稍后重试" };
+    return { code: "RATE_LIMITED", message: "\u274c Too many requests, please try again later" };
   }
   if (statusCode != null && statusCode >= 400) {
     return {
       code: "SERVER_ERROR",
-      message: `\u274c 服务异常（状态码: ${String(statusCode)}），请稍后重试`,
+      message: `\u274c Service error (status: ${String(statusCode)}), please try again later`,
       statusCode,
     };
   }
-  return { code: "NETWORK", message: "\u274c 请检查网络连接" };
+  return { code: "NETWORK", message: "\u274c Please check network connection" };
 }
 
 /**
@@ -58,7 +58,7 @@ export async function fetchProviderList(
   try {
     return (await res.json()) as { providers: ProviderListItem[]; total: number };
   } catch {
-    return { code: "PARSE", message: "\u274c 响应数据异常" };
+    return { code: "PARSE", message: "\u274c Response data error" };
   }
 }
 
@@ -81,7 +81,7 @@ export async function fetchProviderInfo(
   }
 
   if (res.status === 404) {
-    return { code: "NOT_FOUND", message: `\u274c 未找到供应商: ${name}` };
+    return { code: "NOT_FOUND", message: `\u274c Provider not found: ${name}` };
   }
 
   if (!res.ok) {
@@ -91,6 +91,6 @@ export async function fetchProviderInfo(
   try {
     return (await res.json()) as ProviderDetail;
   } catch {
-    return { code: "PARSE", message: "\u274c 响应数据异常" };
+    return { code: "PARSE", message: "\u274c Response data error" };
   }
 }

@@ -8,7 +8,7 @@ const sampleProviders: ProviderListItem[] = [
     latency: 200,
     price: "$0.04",
     tokensPerSecond: 17,
-    description: "支持 GPT-5.5 和 Claude-4 🚀",
+    description: "Supports GPT-5.5 and Claude-4 🚀",
     tags: ["fast", "cheap"],
     models: ["m1", "m2", "m3", "m4"],
     modelCount: 4,
@@ -67,7 +67,7 @@ describe("listAction", () => {
     expect(output).toContain("200ms");
     expect(output).toContain("$0.04");
     expect(output).toContain("m1, m2, m3 (+1)");
-    expect(output).toContain("共 2 家供应商");
+    expect(output).toContain("2 provider(s) total");
   });
 
   it("renders all providers with --all", async () => {
@@ -94,7 +94,7 @@ describe("listAction", () => {
   it("truncates description in table", async () => {
     // Description > 32 chars → truncateDesc adds "..."
     // Column width 28 will also clamp, but let's verify the truncation happened
-    const longDesc = "这是一个较长的描述文本用于测试截断功能效果验证";
+    const longDesc = "A rather long description text for testing truncation functionality";
     mockProviders = [{
       name: "test",
       latency: 100,
@@ -115,7 +115,7 @@ describe("listAction", () => {
     // The description should appear truncated in the output
     expect(output).toContain("test");
     // full description should NOT appear (it would take 40+ chars)
-    expect(output).not.toContain("验证");
+    expect(output).not.toContain("truncation");
   });
 
   it("outputs debug info when --debug is set", async () => {
@@ -126,39 +126,39 @@ describe("listAction", () => {
 
     const debugOutput = stderr.join("\n");
     expect(debugOutput).toContain("[Debug]");
-    expect(debugOutput).toContain("返回供应商数: 2");
+    expect(debugOutput).toContain("Provider count: 2");
   });
 
   it("shows network error message on fetch failure", async () => {
-    mockError = { code: "NETWORK", message: "❌ 请检查网络连接" };
+    mockError = { code: "NETWORK", message: "❌ Please check network connection" };
 
     await listAction(
       { getConfig: async () => null, getApiUrl: () => "https://test.api" },
       { all: false, debug: false },
     );
 
-    expect(stderr.join("\n")).toContain("请检查网络连接");
+    expect(stderr.join("\n")).toContain("Please check network connection");
   });
 
   it("shows service error on non-200 response", async () => {
-    mockError = { code: "SERVER_ERROR", message: "❌ 服务异常（状态码: 500），请稍后重试", statusCode: 500 };
+    mockError = { code: "SERVER_ERROR", message: "❌ Service error (status: 500), please try again later", statusCode: 500 };
 
     await listAction(
       { getConfig: async () => null, getApiUrl: () => "https://test.api" },
       { all: false, debug: false },
     );
 
-    expect(stderr.join("\n")).toContain("服务异常");
+    expect(stderr.join("\n")).toContain("Service error");
   });
 
   it("shows data error on JSON parse failure", async () => {
-    mockError = { code: "PARSE", message: "❌ 响应数据异常" };
+    mockError = { code: "PARSE", message: "❌ Response data error" };
 
     await listAction(
       { getConfig: async () => null, getApiUrl: () => "https://test.api" },
       { all: false, debug: false },
     );
 
-    expect(stderr.join("\n")).toContain("响应数据异常");
+    expect(stderr.join("\n")).toContain("Response data error");
   });
 });

@@ -29,7 +29,7 @@ function formatModels(models: string[], modelCount: number): string {
 
 function formatTable(items: ProviderListItem[], total: number, all: boolean): string {
   const table = new Table({
-    head: ["名称", "延迟", "价格", "模型", "描述", "标签"],
+    head: ["Name", "Latency", "Price", "Models", "Description", "Tags"],
     style: { head: [], border: [], compact: true },
     colWidths: [16, 10, 10, 30, 28, 18],
     wordWrap: false,
@@ -51,9 +51,9 @@ function formatTable(items: ProviderListItem[], total: number, all: boolean): st
   let output = table.toString();
 
   if (!all && total > DEFAULT_LIMIT) {
-    output += `\n共 ${String(total)} 家供应商。使用 --all 展示所有供应商`;
+    output += `\n${String(total)} provider(s) total. Use --all to show all`;
   } else {
-    output += `\n共 ${String(total)} 家供应商`;
+    output += `\n${String(total)} provider(s) total`;
   }
 
   return output;
@@ -72,10 +72,10 @@ export async function listAction(
 
   if ("code" in result) {
     if (options.debug) {
-      console.error(`[Debug] 请求 URL: ${apiUrl}/api/v1/providers`);
-      console.error(`[Debug] 错误码: ${result.code}`);
+      console.error(`[Debug] Request URL: ${apiUrl}/api/v1/providers`);
+      console.error(`[Debug] Error code: ${result.code}`);
       if (result.statusCode != null) {
-        console.error(`[Debug] 状态码: ${String(result.statusCode)}`);
+        console.error(`[Debug] Status code: ${String(result.statusCode)}`);
       }
     }
     console.error(result.message);
@@ -85,9 +85,9 @@ export async function listAction(
   const elapsed = Date.now() - startedAt;
 
   if (options.debug) {
-    console.error(`[Debug] 请求 URL: ${apiUrl}/api/v1/providers`);
-    console.error(`[Debug] 耗时: ${String(elapsed)}ms`);
-    console.error(`[Debug] 返回供应商数: ${String(result.total)}`);
+    console.error(`[Debug] Request URL: ${apiUrl}/api/v1/providers`);
+    console.error(`[Debug] Elapsed: ${String(elapsed)}ms`);
+    console.error(`[Debug] Provider count: ${String(result.total)}`);
   }
 
   const output = formatTable(result.providers, result.total, options.all);

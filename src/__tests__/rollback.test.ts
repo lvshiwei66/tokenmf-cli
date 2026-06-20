@@ -141,7 +141,7 @@ describe("rollback command", () => {
 
       vi.mocked(detectAllApps).mockReturnValue([makeClaudeCodeApp(appDir)]);
 
-      await expect(rollbackCommand({})).rejects.toThrow(/备份丢失/);
+      await expect(rollbackCommand({})).rejects.toThrow(/backup lost/);
     });
 
     it("does not modify original config when no .bak exists", async () => {
@@ -186,7 +186,7 @@ describe("rollback command", () => {
         // Should NOT touch auth.json
         expect(JSON.parse(readFileSync(authCfg, "utf-8")).token).toBe("no-backup");
         // Should warn about partial
-        expect(warnings.some((w) => w.includes("缺失"))).toBe(true);
+        expect(warnings.some((w) => w.includes("missing"))).toBe(true);
       } finally {
         console.warn = origWarn;
       }
@@ -219,7 +219,7 @@ describe("rollback command", () => {
           makeOpenClawApp(appDir2),
         ]);
 
-        await expect(rollbackCommand({})).rejects.toThrow(/多个应用/);
+        await expect(rollbackCommand({})).rejects.toThrow(/Multiple/);
       } finally {
         try { rmSync(appDir2, { recursive: true, force: true }); } catch { /* */ }
       }
@@ -250,13 +250,13 @@ describe("rollback command", () => {
     it("throws when specified app not installed", async () => {
       vi.mocked(detectAllApps).mockReturnValue([makeCodexApp(appDir)]);
 
-      await expect(rollbackCommand({ app: "claude-code" })).rejects.toThrow(/未找到/);
+      await expect(rollbackCommand({ app: "claude-code" })).rejects.toThrow(/not found/);
     });
 
     it("throws when no apps installed", async () => {
       vi.mocked(detectAllApps).mockReturnValue([]);
 
-      await expect(rollbackCommand({})).rejects.toThrow(/未检测到/);
+      await expect(rollbackCommand({})).rejects.toThrow(/No installed/);
     });
   });
 
@@ -276,8 +276,8 @@ describe("rollback command", () => {
 
       try {
         await rollbackCommand({});
-        expect(log.some((l) => l.includes("已") && l.includes("openclaw"))).toBe(true);
-        expect(log.some((l) => l.includes("重启"))).toBe(true);
+        expect(log.some((l) => l.includes("restored") && l.includes("openclaw"))).toBe(true);
+        expect(log.some((l) => l.includes("restart"))).toBe(true);
       } finally {
         console.log = origLog;
       }
