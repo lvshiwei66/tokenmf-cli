@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getConfig, saveConfig, getFingerprint, getApiUrl } from "../config.js";
+import { getConfig, saveConfig, getFingerprint, getApiUrl } from "../config/index.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";

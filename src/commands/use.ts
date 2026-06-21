@@ -5,7 +5,7 @@ import {
   saveSettings,
   getProviderMemory,
   setProviderMemory,
-} from "../config/settings.js";
+} from "../config/index.js";
 import { fetchProviderInfo } from "../providers/api.js";
 import { getAppfit } from "../appfits/index.js";
 import type { UseParams, ProviderDetail } from "../types/provider.js";

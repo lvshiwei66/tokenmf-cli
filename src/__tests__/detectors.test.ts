@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { detectAllApps } from "../detectors/index.js";
-import { CodexDetector } from "../detectors/codex.js";
-import { ClaudeCodeDetector } from "../detectors/claude-code.js";
-import { OpenClawDetector } from "../detectors/openclaw.js";
+import { ConfigFileDetector } from "../detectors/config-file-detector.js";
+import type { DetectorConfig } from "../detectors/config-file-detector.js";
 import * as fs from "node:fs";
 
 vi.mock("node:fs", async () => {
@@ -13,98 +12,54 @@ vi.mock("node:fs", async () => {
   };
 });
 
-describe("App detectors", () => {
+const DETECTOR_CONFIGS: DetectorConfig[] = [
+  { name: "codex", configDirName: ".codex", configFileName: "config.toml", configFormat: "toml" },
+  { name: "claude-code", configDirName: ".claude", configFileName: "settings.json", configFormat: "json" },
+  { name: "openclaw", configDirName: ".openclaw", configFileName: "config.yaml", configFormat: "yaml" },
+];
+
+describe("ConfigFileDetector", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe("detectAllApps", () => {
-    it("returns array", () => {
-      const apps = detectAllApps();
-      expect(Array.isArray(apps)).toBe(true);
-    });
+  for (const config of DETECTOR_CONFIGS) {
+    describe(config.name, () => {
+      it("returns null when config file does not exist", () => {
+        vi.mocked(fs.existsSync).mockReturnValue(false);
+        const detector = new ConfigFileDetector(config);
+        expect(detector.detect()).toBeNull();
+      });
 
-    it("handles errors gracefully", () => {
-      const apps = detectAllApps();
-      expect(apps).toBeDefined();
+      it("returns AppConfig with required fields when config exists", () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        const detector = new ConfigFileDetector(config);
+        const result = detector.detect();
+
+        expect(result).not.toBeNull();
+        expect(result).toHaveProperty("name", config.name);
+        expect(result).toHaveProperty("path");
+        expect(result).toHaveProperty("configPath");
+        expect(result).toHaveProperty("configFormat", config.configFormat);
+      });
     });
+  }
+});
+
+describe("detectAllApps", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  describe("CodexDetector", () => {
-    it("detect function exists", () => {
-      const detector = new CodexDetector();
-      expect(typeof detector.detect).toBe("function");
-    });
-
-    it("returns null when config file does not exist", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false);
-      const detector = new CodexDetector();
-      const result = detector.detect();
-      expect(result).toBeNull();
-    });
-
-    it("returns AppConfig with required fields when config exists", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
-      const detector = new CodexDetector();
-      const result = detector.detect();
-
-      expect(result).not.toBeNull();
-      expect(result).toHaveProperty("name", "codex");
-      expect(result).toHaveProperty("path");
-      expect(result).toHaveProperty("configPath");
-      expect(result).toHaveProperty("configFormat", "toml");
-    });
+  it("returns empty array when no apps installed", () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    expect(detectAllApps()).toEqual([]);
   });
 
-  describe("ClaudeCodeDetector", () => {
-    it("detect function exists", () => {
-      const detector = new ClaudeCodeDetector();
-      expect(typeof detector.detect).toBe("function");
-    });
-
-    it("returns null when config file does not exist", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false);
-      const detector = new ClaudeCodeDetector();
-      const result = detector.detect();
-      expect(result).toBeNull();
-    });
-
-    it("returns AppConfig with required fields when config exists", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
-      const detector = new ClaudeCodeDetector();
-      const result = detector.detect();
-
-      expect(result).not.toBeNull();
-      expect(result).toHaveProperty("name", "claude-code");
-      expect(result).toHaveProperty("path");
-      expect(result).toHaveProperty("configPath");
-      expect(result).toHaveProperty("configFormat", "json");
-    });
-  });
-
-  describe("OpenClawDetector", () => {
-    it("detect function exists", () => {
-      const detector = new OpenClawDetector();
-      expect(typeof detector.detect).toBe("function");
-    });
-
-    it("returns null when config file does not exist", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false);
-      const detector = new OpenClawDetector();
-      const result = detector.detect();
-      expect(result).toBeNull();
-    });
-
-    it("returns AppConfig with required fields when config exists", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
-      const detector = new OpenClawDetector();
-      const result = detector.detect();
-
-      expect(result).not.toBeNull();
-      expect(result).toHaveProperty("name", "openclaw");
-      expect(result).toHaveProperty("path");
-      expect(result).toHaveProperty("configPath");
-      expect(result).toHaveProperty("configFormat", "yaml");
-    });
+  it("returns detected apps when config files exist", () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    const apps = detectAllApps();
+    expect(apps).toHaveLength(3);
+    expect(apps.map((a) => a.name).sort()).toEqual(["claude-code", "codex", "openclaw"]);
   });
 });

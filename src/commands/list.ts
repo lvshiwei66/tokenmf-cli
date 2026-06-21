@@ -1,5 +1,5 @@
 import Table from "cli-table3";
-import type { ConfigProvider } from "../config.js";
+import type { ConfigProvider } from "../config/index.js";
 import { fetchProviderList } from "../providers/api.js";
 import type { ProviderListItem } from "../types/provider.js";
 

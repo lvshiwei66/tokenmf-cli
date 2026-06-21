@@ -5,10 +5,7 @@ import { fileURLToPath } from "node:url";
 import { setup } from "./commands/setup.js";
 import { listAction } from "./commands/list.js";
 import { askAction } from "./commands/ask.js";
-import { getConfig, getApiUrl, CONFIG_PATH } from "./config.js";
-import { useCommand } from "./commands/use.js";
-import { rollbackCommand } from "./commands/rollback.js";
-import { loadSettings } from "./config/settings.js";
+import { getConfig, getApiUrl, CONFIG_PATH, loadSettings } from "./config/index.js";
 
 export function createProgram(): Command {
   const program = new Command();

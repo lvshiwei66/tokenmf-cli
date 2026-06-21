@@ -7,8 +7,8 @@ import {
   saveSettings,
   getProviderMemory,
   setProviderMemory,
-} from "../config/settings.js";
-import type { Settings } from "../config/settings.js";
+} from "../config/index.js";
+import type { Settings } from "../config/index.js";
 
 const configDir = join(homedir(), ".tokenmofang");
 const settingsPath = join(configDir, "settings.json");

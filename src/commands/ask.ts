@@ -1,4 +1,4 @@
-import type { ConfigProvider } from "../config.js";
+import type { ConfigProvider } from "../config/index.js";
 import { fetchProviderInfo } from "../providers/api.js";
 
 export interface AskOptions {

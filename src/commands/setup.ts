@@ -2,7 +2,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { userInfo } from "node:os";
 import { detectAllApps } from "../detectors/index.js";
-import { getFingerprint, CONFIG_DIR, CONFIG_PATH, saveConfig } from "../config.js";
+import { getFingerprint, CONFIG_DIR, CONFIG_PATH, saveConfig } from "../config/index.js";
 import type { DetectionReport } from "../detectors/types.js";
 
 export async function setup(): Promise<void> {

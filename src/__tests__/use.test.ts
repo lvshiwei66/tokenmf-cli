@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { parse as parseToml } from "smol-toml";
 import { parse as parseYaml } from "yaml";
 import { useCommand } from "../commands/use.js";
-import type { Settings } from "../config/settings.js";
+import type { Settings } from "../config/index.js";
 
 // ═══════════════════════════════════════════════════════════════════
 // Mock detectors — configurable per test
@@ -28,10 +28,10 @@ import type { AppConfig } from "../detectors/types.js";
 // ═══════════════════════════════════════════════════════════════════
 
 let mockSettings: Settings = { providers: {} };
-vi.mock("../config/settings.js", async () => {
+vi.mock("../config/index.js", async () => {
   const actual =
-    await vi.importActual<typeof import("../config/settings.js")>(
-      "../config/settings.js",
+    await vi.importActual<typeof import("../config/index.js")>(
+      "../config/index.js",
     );
   return {
     ...actual,
@@ -41,7 +41,7 @@ vi.mock("../config/settings.js", async () => {
     }),
   };
 });
-import { saveSettings } from "../config/settings.js";
+import { saveSettings } from "../config/index.js";
 
 // ═══════════════════════════════════════════════════════════════════
 // Mock API client — configurable per test via mockProviderInfos
