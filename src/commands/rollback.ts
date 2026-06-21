@@ -26,7 +26,9 @@ export async function rollbackCommand(
     const bakPath = configPath + ".bak";
     try {
       await access(bakPath);
-    } catch {
+    } catch (e: unknown) {
+      const code = (e as NodeJS.ErrnoException)?.code;
+      if (code === "EACCES") throw e;
       missingCount++;
       continue;
     }
@@ -35,9 +37,10 @@ export async function rollbackCommand(
       await copyFile(bakPath, configPath);
       toDelete.push(bakPath);
       restoredCount++;
-    } catch {
+    } catch (e: unknown) {
       throw new Error(
-        `Restore ${configPath} failed: backup exists but restore error`,
+        `Restore ${configPath} failed: ${e instanceof Error ? e.message : "unknown error"}`,
+        { cause: e instanceof Error ? e : undefined },
       );
     }
   }

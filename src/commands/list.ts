@@ -40,7 +40,7 @@ function formatTable(items: ProviderListItem[], total: number, all: boolean): st
   for (const p of rows) {
     table.push([
       p.name,
-      `${String(p.latency)}ms`,
+      p.latency != null ? `${String(p.latency)}ms` : "N/A",
       p.price,
       formatModels(p.models, p.modelCount),
       truncateDesc(p.description, TABLE_DESC_MAX),

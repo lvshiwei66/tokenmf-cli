@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 
@@ -76,9 +76,9 @@ export function getApiUrl(config: CliConfig | null): string {
 
 // ── Settings I/O ─────────────────────────────────────────────
 
-const DEFAULT_SETTINGS: Settings = {
-  providers: {},
-};
+function createDefaultSettings(): Settings {
+  return { providers: {} };
+}
 
 export async function loadSettings(): Promise<Settings> {
   try {
@@ -89,13 +89,15 @@ export async function loadSettings(): Promise<Settings> {
       providers: parsed.providers ?? {},
     };
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    return createDefaultSettings();
   }
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
   await mkdir(CONFIG_DIR, { recursive: true });
-  await writeFile(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+  const tmpPath = SETTINGS_PATH + ".tmp";
+  await writeFile(tmpPath, JSON.stringify(settings, null, 2));
+  await rename(tmpPath, SETTINGS_PATH);
 }
 
 export function getProviderMemory(

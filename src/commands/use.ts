@@ -172,7 +172,9 @@ export async function useCommand(
   for (const configPath of configPaths) {
     try {
       await copyFile(configPath, configPath + ".bak");
-    } catch {
+    } catch (e: unknown) {
+      const code = (e as NodeJS.ErrnoException)?.code;
+      if (code !== "ENOENT") throw e;
       // File may not exist (e.g., auth.json for Codex); skip
     }
   }
