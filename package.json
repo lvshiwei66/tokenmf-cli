@@ -1,5 +1,5 @@
 {
-  "name": "tmf",
+  "name": "@tokenmf/cli",
   "version": "0.1.0",
   "description": "Token魔方 – Spin up any LLM provider in one CLI command.",
   "license": "MIT",
