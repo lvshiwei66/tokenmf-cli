@@ -10,8 +10,8 @@ import {
 } from "../config/index.js";
 import type { Settings } from "../config/index.js";
 
-const configDir = join(homedir(), ".tokenmofang");
-const settingsPath = join(configDir, "settings.json");
+const configDir = join(homedir(), ".tmf");
+const settingsPath = join(configDir, "store", "used.json");
 
 describe("Settings persistence", () => {
   beforeEach(() => {

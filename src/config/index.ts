@@ -31,9 +31,9 @@ export interface Settings {
 
 // ── Paths ────────────────────────────────────────────────────
 
-const CONFIG_DIR = join(homedir(), ".tokenmofang");
+const CONFIG_DIR = join(homedir(), ".tmf");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
-const SETTINGS_PATH = join(CONFIG_DIR, "settings.json");
+const SETTINGS_PATH = join(CONFIG_DIR, "store", "used.json");
 
 export { CONFIG_DIR, CONFIG_PATH };
 
@@ -94,7 +94,7 @@ export async function loadSettings(): Promise<Settings> {
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
-  await mkdir(CONFIG_DIR, { recursive: true });
+  await mkdir(join(CONFIG_DIR, "store"), { recursive: true });
   const tmpPath = SETTINGS_PATH + ".tmp";
   await writeFile(tmpPath, JSON.stringify(settings, null, 2));
   await rename(tmpPath, SETTINGS_PATH);

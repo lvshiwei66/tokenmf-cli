@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 
 describe("Setup command", () => {
-  const configDir = join(homedir(), ".tokenmofang");
+  const configDir = join(homedir(), ".tmf");
   const reportPath = join(configDir, "detection-report.json");
 
   beforeEach(() => {

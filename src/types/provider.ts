@@ -26,7 +26,7 @@ export interface UseParams {
   model?: string;
 }
 
-// --- Settings (stored in ~/.tokenmofang/settings.json) ---
+// --- Settings (stored in ~/.tmf/store/used.json) ---
 
 export interface ProviderSettings {
   apiKey?: string;

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { Command } from "commander";
 import { registerTestCommand } from "../commands/test.js";
-import { writeSettings } from "../config/settings.js";
+import { saveSettings } from "../config/index.js";
+import type { Settings } from "../config/index.js";
 import { TEST_EXIT_CODES } from "../types/provider.js";
 
 // ---------------------------------------------------------------
@@ -78,8 +79,8 @@ async function run(args: string[]): Promise<CommandResult> {
 // ---------------------------------------------------------------
 
 describe("test command integration", () => {
-  beforeEach(() => {
-    writeSettings({
+  beforeEach(async () => {
+    await saveSettings({
       providers: {
         packcode: {
           apiKey: "sk-saved-key",
@@ -104,7 +105,7 @@ describe("test command integration", () => {
   });
 
   it("errors when provider has no saved settings and no flags", async () => {
-    writeSettings({ providers: {} });
+    await saveSettings({ providers: {} });
 
     const { stderr, exitCode } = await run(["test", "unknown-provider"]);
 
@@ -113,7 +114,7 @@ describe("test command integration", () => {
   });
 
   it("uses --key flag for apiKey", async () => {
-    writeSettings({
+    await saveSettings({
       providers: {
         packcode: {
           model: "deepseek-v4-pro",
