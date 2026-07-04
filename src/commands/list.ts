@@ -61,8 +61,8 @@ function formatTable(items: ProviderListItem[], total: number, all: boolean): st
       "bottom-right": "",
       left: "",
       "left-mid": "",
-      mid: "",
-      "mid-mid": "",
+      mid: "─",
+      "mid-mid": " ",
       right: "",
       "right-mid": "",
       middle: " ",
@@ -79,6 +79,21 @@ function formatTable(items: ProviderListItem[], total: number, all: boolean): st
   }
 
   let output = table.toString();
+
+  // Keep only the first separator line (after header), strip duplicates between data rows
+  {
+    const lines = output.split("\n");
+    const sepRe = /^─/;
+    let seen = false;
+    const filtered = lines.filter((line) => {
+      if (sepRe.test(line.trimStart())) {
+        if (!seen) { seen = true; return true; }
+        return false;
+      }
+      return true;
+    });
+    output = filtered.join("\n");
+  }
 
   if (!all && total > DEFAULT_LIMIT) {
     output += `\n---\n${String(total)} provider(s) total. Use --all to show all`;
