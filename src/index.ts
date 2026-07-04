@@ -20,10 +20,9 @@ export function createProgram(): Command {
 
   program
     .name("tmf")
-    .description("TokenMofang – Spin up any LLM provider in one CLI command.")
+    .description("tokenmf – Spin up any LLM provider in one CLI command.")
     .version(`${getVersion(join(__dirname, "..")) ?? "0.0.0"}\n${getApiUrl(null)}`)
-    .option("-d, --debug", "Output debug information")
-    .addHelpText("after", `\nEnvironment:\n  API  ${getApiUrl(null)}\n`);
+    .option("-d, --debug", "Output debug information");
   // ── use ─────────────────────────────────────────────────────
   program
     .command("use <provider>")

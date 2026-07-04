@@ -136,7 +136,7 @@ function formatVerbose(result: TestResult, params: ResolvedTestParams): void {
 export function registerTestCommand(program: Command): void {
   program
     .command("test <provider>")
-    .description("测试 Provider 健康状况（延迟、Token 消耗、速率）")
+    .description("Get report of provider include health and more information")
     .option("-m, --model <model>", "指定模型")
     .option("-k, --key <key>", "API Key")
     .option("-p, --prompt <prompt>", "自定义提示词")
