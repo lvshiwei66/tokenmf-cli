@@ -21,9 +21,9 @@ export function createProgram(): Command {
   program
     .name("tmf")
     .description("TokenMofang – Spin up any LLM provider in one CLI command.")
-    .version(`${getVersion(join(__dirname, "..")) ?? "0.0.0"}\nTMF_API_URL: ${getApiUrl(null)}`)
+    .version(`${getVersion(join(__dirname, "..")) ?? "0.0.0"}\n${getApiUrl(null)}`)
     .option("-d, --debug", "Output debug information")
-    .addHelpText("after", `\nEnvironment:\n  TMF_API_URL  ${getApiUrl(null)}\n`);
+    .addHelpText("after", `\nEnvironment:\n  API  ${getApiUrl(null)}\n`);
   // ── use ─────────────────────────────────────────────────────
   program
     .command("use <provider>")
