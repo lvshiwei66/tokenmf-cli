@@ -73,8 +73,8 @@ function formatTable(items: ProviderListItem[], total: number, all: boolean): st
     table.push([
       p.name,
       formatModels(p.models, p.modelCount),
-      p.description,
-      p.tags.join(", "),
+      p.description.replace(/\n/g, " "),
+      p.tags.join(", ").replace(/\n/g, " "),
     ]);
   }
 
