@@ -11,7 +11,7 @@ export interface ListOptions {
 const DEFAULT_LIMIT = 20;
 
 /** Column widths (terminal display columns — CJK chars count as 2) */
-const COLS = { name: 10, models: 32, desc: 32, tags: 24 } as const;
+const COLS = { name: 20, models: 28, desc: 28, tags: 21 } as const;
 
 /**
  * Format models cell content.
