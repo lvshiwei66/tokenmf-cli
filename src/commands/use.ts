@@ -8,7 +8,7 @@ import {
 } from "../config/index.js";
 import { fetchProviderInfo } from "../providers/api.js";
 import { getAppfit } from "../appfits/index.js";
-import type { UseParams, ProviderDetail } from "../types/provider.js";
+import type { UseParams, ProviderDetail, RoleModels } from "../types/provider.js";
 import type { AppConfig } from "../detectors/types.js";
 
 async function promptHidden(prompt: string): Promise<string> {
@@ -98,7 +98,7 @@ export function selectApp(
 
 export async function useCommand(
   provider: string,
-  options: { key?: string; model?: string; models?: string[]; env?: Record<string, string>; effortLevel?: string; app?: string },
+  options: { key?: string; model?: string; models?: string[]; roleModels?: RoleModels; env?: Record<string, string>; effortLevel?: string; app?: string },
   apiUrl: string,
   clientId?: string,
 ): Promise<void> {
@@ -192,6 +192,7 @@ export async function useCommand(
       apiKey,
       model,
       models: options.models,
+      roleModels: options.roleModels,
       env: options.env,
       effortLevel: options.effortLevel,
     };

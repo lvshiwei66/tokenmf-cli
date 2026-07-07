@@ -57,10 +57,71 @@ export function createProgram(): Command {
             }
           }
         }
+
+        // Parse --models: support both positional and key=value formats
+        let roleModels: Record<string, string> | undefined;
+        let models: string[] | undefined;
+        if (options.models && (options.models as string[]).length > 0) {
+          const raw = options.models as string[];
+          // Key=value format: --models opus=X,sonnet=Y,haiku=Z
+          const kvParts = raw.flatMap((entry) => entry.split(",").map((s) => s.trim()).filter(Boolean));
+          const kvMap: Record<string, string> = {};
+          let hasKv = false;
+          for (const part of kvParts) {
+            const eqIdx = part.indexOf("=");
+            if (eqIdx > 0) {
+              const key = part.slice(0, eqIdx).trim().toLowerCase();
+              const value = part.slice(eqIdx + 1).trim();
+              if (key === "opus" || key === "sonnet" || key === "haiku") {
+                kvMap[key] = value;
+                hasKv = true;
+              } else {
+                console.warn(`⚠ Ignoring unknown model role "${key}" in --models. Expected: opus, sonnet, haiku`);
+              }
+            }
+          }
+
+          if (hasKv) {
+            roleModels = kvMap;
+            // Primary model: first role available in opus > sonnet > haiku order
+            const primary = kvMap.opus ?? kvMap.sonnet ?? kvMap.haiku;
+            if (primary) {
+              models = [primary];
+              // Build fallback chain: remaining distinct models
+              const seen = new Set([primary]);
+              const fallbacks: string[] = [];
+              for (const m of [kvMap.opus, kvMap.sonnet, kvMap.haiku]) {
+                if (m && !seen.has(m)) {
+                  fallbacks.push(m);
+                  seen.add(m);
+                }
+              }
+              if (fallbacks.length > 0) models.push(...fallbacks);
+            }
+          } else {
+            // Positional: --models <opus> <sonnet> <haiku>
+            if (raw.length >= 1) roleModels = { opus: raw[0] };
+            if (raw.length >= 2) roleModels = { ...roleModels, sonnet: raw[1] };
+            if (raw.length >= 3) roleModels = { ...roleModels, haiku: raw[2] };
+            // Primary model: first (opus), strongest
+            const primary = raw[0];
+            models = [primary];
+            // Fallbacks: distinct remaining models in order
+            const seen = new Set([primary]);
+            for (let i = 1; i < raw.length; i++) {
+              if (!seen.has(raw[i])) {
+                models.push(raw[i]);
+                seen.add(raw[i]);
+              }
+            }
+          }
+        }
+
         await useCommand(provider, {
           key: options.key,
           model: options.model,
-          models: options.models,
+          models,
+          roleModels,
           env: Object.keys(envRecord).length > 0 ? envRecord : undefined,
           effortLevel: options.effort,
           app: options.app,

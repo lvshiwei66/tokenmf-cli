@@ -11,6 +11,9 @@ const MANAGED_ENV_KEYS = new Set([
   "ANTHROPIC_AUTH_TOKEN",
   "ANTHROPIC_BASE_URL",
   "ANTHROPIC_MODEL",
+  "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+  "ANTHROPIC_DEFAULT_SONNET_MODEL",
+  "ANTHROPIC_DEFAULT_OPUS_MODEL",
 ]);
 
 interface ClaudeCodeSettings {
@@ -78,6 +81,26 @@ export const claudeCodeAppfit: Appfit = {
     // Effort level
     if (params.effortLevel) {
       settings.effortLevel = params.effortLevel;
+    }
+
+    // Role-based model assignments (ANTHROPIC_DEFAULT_HAIKU/SONNET/OPUS_MODEL)
+    // Set from roleModels, clear if not provided
+    if (params.roleModels) {
+      if (params.roleModels.haiku) {
+        settings.env.ANTHROPIC_DEFAULT_HAIKU_MODEL = params.roleModels.haiku;
+      } else {
+        delete settings.env.ANTHROPIC_DEFAULT_HAIKU_MODEL;
+      }
+      if (params.roleModels.sonnet) {
+        settings.env.ANTHROPIC_DEFAULT_SONNET_MODEL = params.roleModels.sonnet;
+      } else {
+        delete settings.env.ANTHROPIC_DEFAULT_SONNET_MODEL;
+      }
+      if (params.roleModels.opus) {
+        settings.env.ANTHROPIC_DEFAULT_OPUS_MODEL = params.roleModels.opus;
+      } else {
+        delete settings.env.ANTHROPIC_DEFAULT_OPUS_MODEL;
+      }
     }
 
     // Merge custom env vars (e.g. --env:ANTHROPIC_DEFAULT_SONNET_MODEL=xxx)

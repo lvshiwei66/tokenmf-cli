@@ -19,6 +19,17 @@ export interface ProviderDetail {
   updated_at: string;
 }
 
+/**
+ * Model assignments by role for Claude Code's ANTHROPIC_DEFAULT_*_MODEL env vars.
+ * Positional: --models <opus> <sonnet> <haiku> [default]
+ * Key-value: --models opus=X,sonnet=Y,haiku=Z
+ */
+export interface RoleModels {
+  opus?: string;
+  sonnet?: string;
+  haiku?: string;
+}
+
 export interface UseParams {
   provider: string;
   baseUrl: string;
@@ -26,6 +37,8 @@ export interface UseParams {
   model?: string;
   /** Multiple models: first is primary (ANTHROPIC_MODEL), rest form fallback chain */
   models?: string[];
+  /** Model assignments by role (haiku, sonnet, opus) for Claude Code */
+  roleModels?: RoleModels;
   /** Custom environment variables to merge into settings.json env block */
   env?: Record<string, string>;
   /** Effort level: low, medium, high, xhigh */
