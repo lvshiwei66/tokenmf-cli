@@ -7,7 +7,7 @@ Spin up any LLM provider in one CLI command.
 Recommended global install:
 
 ```bash
-npm install -g @tokenmf/cli
+npm install -g @tokenmf/tmf
 ```
 
 After installation, the `tmf` command is available:
