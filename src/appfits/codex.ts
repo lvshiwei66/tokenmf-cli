@@ -23,7 +23,7 @@ export const codexAppfit: Appfit = {
     const tomlRaw = await readFile(configPath, "utf-8");
     const toml = parseToml(tomlRaw) as Record<string, unknown>;
 
-    toml.model_provider = "custom";
+    toml.model_provider = params.provider;
 
     // Model: --models[0] > --model (Codex has no fallback chain)
     const primaryModel = params.models?.[0] ?? params.model;
@@ -33,7 +33,7 @@ export const codexAppfit: Appfit = {
 
     toml.model_providers = {
       ...((toml.model_providers as Record<string, unknown>) ?? {}),
-      custom: {
+      [params.provider]: {
         name: params.provider,
         base_url: params.baseUrl,
         api_key: params.apiKey,
