@@ -25,8 +25,10 @@ export const codexAppfit: Appfit = {
 
     toml.model_provider = "custom";
 
-    if (params.model) {
-      toml.model = params.model;
+    // Model: --models[0] > --model (Codex has no fallback chain)
+    const primaryModel = params.models?.[0] ?? params.model;
+    if (primaryModel) {
+      toml.model = primaryModel;
     }
 
     toml.model_providers = {
@@ -37,6 +39,19 @@ export const codexAppfit: Appfit = {
         api_key: params.apiKey,
       },
     };
+
+    // Effort level
+    if (params.effortLevel) {
+      toml.model_reasoning_effort = params.effortLevel;
+    }
+
+    // Merge custom env vars as top-level TOML keys (supports dotted paths)
+    // e.g. --env features.browser_use=true sets toml.features.browser_use
+    if (params.env) {
+      for (const [key, value] of Object.entries(params.env)) {
+        setNestedToml(toml, key, value);
+      }
+    }
 
     await writeFile(configPath, stringifyToml(toml));
 
@@ -53,3 +68,46 @@ export const codexAppfit: Appfit = {
     await writeFile(authPath, JSON.stringify(auth, null, 2) + "\n");
   },
 };
+
+/**
+ * Set a nested value in a plain object using dotted key notation.
+ * Keys that look like TOML values (booleans, numbers) are parsed;
+ * otherwise the raw string is used.
+ *
+ * Example: setNestedToml(obj, "features.browser_use", "true")
+ *   → obj.features = { browser_use: true }
+ */
+function setNestedToml(obj: Record<string, unknown>, dottedKey: string, rawValue: string): void {
+  const parts = dottedKey.split(".");
+  const parsed = parseTomlValue(rawValue);
+
+  let current = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = parts[i];
+    if (!current[key] || typeof current[key] !== "object" || Array.isArray(current[key])) {
+      current[key] = {};
+    }
+    current = current[key] as Record<string, unknown>;
+  }
+
+  current[parts[parts.length - 1]] = parsed;
+}
+
+/**
+ * Parse a value string as TOML. On failure, return the raw string.
+ * Supports: true/false, integers, floats, quoted strings, inline tables.
+ */
+function parseTomlValue(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (/^-?\d+$/.test(trimmed)) return Number.parseInt(trimmed, 10);
+  if (/^-?\d+\.\d+$/.test(trimmed)) return Number.parseFloat(trimmed);
+  // Try smol-toml for complex values (arrays, inline tables)
+  try {
+    const parsed = parseToml(`_ = ${trimmed}`);
+    return (parsed as Record<string, unknown>)._;
+  } catch {
+    return raw;
+  }
+}

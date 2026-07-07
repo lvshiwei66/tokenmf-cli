@@ -98,7 +98,7 @@ export function selectApp(
 
 export async function useCommand(
   provider: string,
-  options: { key?: string; model?: string; app?: string },
+  options: { key?: string; model?: string; models?: string[]; env?: Record<string, string>; effortLevel?: string; app?: string },
   apiUrl: string,
   clientId?: string,
 ): Promise<void> {
@@ -145,8 +145,9 @@ export async function useCommand(
     providerInfo = result;
   }
 
-  // 4. Resolve model
-  const model = resolveModel(options.model, memory?.model, providerInfo.defaultModel);
+  // 4. Resolve model: --models[0] > --model > memory > provider default
+  const effectiveModel = options.models?.[0] ?? options.model;
+  const model = resolveModel(effectiveModel, memory?.model, providerInfo.defaultModel);
 
   // 5. Determine target apps
   const allApps = detectAllApps();
@@ -190,6 +191,9 @@ export async function useCommand(
       baseUrl: resolvedUrl,
       apiKey,
       model,
+      models: options.models,
+      env: options.env,
+      effortLevel: options.effortLevel,
     };
 
     try {
@@ -200,8 +204,14 @@ export async function useCommand(
       );
     }
 
-    const modelNote = model ? `, model: ${model}` : "";
-    console.log(`✅ Switched ${app.name} to ${provider}${modelNote}. Please restart the application.`);
+    const parts: string[] = [`✅ Switched ${app.name} to ${provider}`];
+    if (model) parts.push(`model: ${model}`);
+    if (options.models && options.models.length > 1) parts.push(`fallback: [${options.models.slice(1).join(", ")}]`);
+    if (options.effortLevel) parts.push(`effort: ${options.effortLevel}`);
+    const envCount = options.env ? Object.keys(options.env).length : 0;
+    if (envCount > 0) parts.push(`+${envCount} env var(s)`);
+    parts.push("Please restart the application.");
+    console.log(parts.join(". "));
   }
 
   // 7. Update memory (shared across all apps)

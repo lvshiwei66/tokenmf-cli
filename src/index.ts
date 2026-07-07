@@ -28,7 +28,10 @@ export function createProgram(): Command {
     .command("use <provider>")
     .description("Switch provider and model for the specified AI application")
     .option("-k, --key <api-key>", "API Key")
-    .option("-m, --model <model>", "Model name")
+    .option("-m, --model <model>", "Model name (single model)")
+    .option("--models <models...>", "Multiple models (first is primary, rest are fallback chain)")
+    .option("--env <env...>", "Custom env vars to set (KEY=VALUE format)")
+    .option("--effort <level>", "Effort level: low, medium, high, xhigh")
     .option("-a, --app <app>", "Target application (codex, claude-code, openclaw)")
     .action(async (provider, options) => {
       try {
@@ -42,7 +45,26 @@ export function createProgram(): Command {
         const apiUrl = getApiUrl(config);
         const settings = await loadSettings();
         const clientId = config?.fingerprint;
-        await useCommand(provider, options, apiUrl, clientId);
+        // Parse --env KEY=VALUE into a Record
+        const envRecord: Record<string, string> = {};
+        if (options.env) {
+          for (const entry of options.env as string[]) {
+            const eqIdx = entry.indexOf("=");
+            if (eqIdx > 0) {
+              envRecord[entry.slice(0, eqIdx).trim()] = entry.slice(eqIdx + 1).trim();
+            } else {
+              console.warn(`⚠ Ignoring malformed --env entry: "${entry}" (expected KEY=VALUE)`);
+            }
+          }
+        }
+        await useCommand(provider, {
+          key: options.key,
+          model: options.model,
+          models: options.models,
+          env: Object.keys(envRecord).length > 0 ? envRecord : undefined,
+          effortLevel: options.effort,
+          app: options.app,
+        }, apiUrl, clientId);
       } catch (error) {
         console.error(
           "❌ Error:",

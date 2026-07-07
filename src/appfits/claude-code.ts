@@ -3,15 +3,21 @@ import { join } from "node:path";
 import type { Appfit } from "./types.js";
 import type { UseParams } from "../types/provider.js";
 
-interface ClaudeCodeEnv {
-  ANTHROPIC_AUTH_TOKEN?: string;
-  ANTHROPIC_BASE_URL?: string;
-  ANTHROPIC_MODEL?: string;
-  [key: string]: unknown;
-}
+/**
+ * Env vars managed by tmf for Claude Code. These are always set/cleared
+ * by the appfit. Any other env vars in the user's settings.json are preserved.
+ */
+const MANAGED_ENV_KEYS = new Set([
+  "ANTHROPIC_AUTH_TOKEN",
+  "ANTHROPIC_BASE_URL",
+  "ANTHROPIC_MODEL",
+]);
 
 interface ClaudeCodeSettings {
-  env?: ClaudeCodeEnv;
+  model?: string;
+  fallbackModel?: string[];
+  effortLevel?: string;
+  env?: Record<string, string>;
   [key: string]: unknown;
 }
 
@@ -31,23 +37,60 @@ export const claudeCodeAppfit: Appfit = {
     const raw = await readFile(configPath, "utf-8");
     const settings = JSON.parse(raw) as ClaudeCodeSettings;
 
-    // Claude Code reads provider config from the env block
+    // Ensure env block exists and preserve non-managed keys
     if (!settings.env) {
       settings.env = {};
     }
 
+    // Set core managed env vars
     settings.env.ANTHROPIC_AUTH_TOKEN = params.apiKey;
     settings.env.ANTHROPIC_BASE_URL = params.baseUrl;
 
-    if (params.model) {
-      settings.env.ANTHROPIC_MODEL = params.model;
+    // Resolve model(s): models[] takes priority over model
+    const primaryModel = params.models?.[0] ?? params.model;
+    const fallbackModels = params.models
+      ? params.models.slice(1)
+      : undefined;
+
+    if (primaryModel) {
+      settings.env.ANTHROPIC_MODEL = primaryModel;
+    } else {
+      // If neither model nor models is provided, remove managed model key
+      // so that existing config is not overwritten with undefined
+      delete settings.env.ANTHROPIC_MODEL;
+    }
+
+    // Top-level model field (lower priority than env ANTHROPIC_MODEL,
+    // but set for consistency and as fallback)
+    if (primaryModel) {
+      settings.model = primaryModel;
+    }
+
+    // Fallback model chain
+    if (fallbackModels && fallbackModels.length > 0) {
+      settings.fallbackModel = fallbackModels;
+    } else if (params.models && params.models.length === 1) {
+      // Only one model provided, no fallback chain
+      delete settings.fallbackModel;
+    }
+    // If --models not used at all, preserve existing fallbackModel
+
+    // Effort level
+    if (params.effortLevel) {
+      settings.effortLevel = params.effortLevel;
+    }
+
+    // Merge custom env vars (e.g. --env:ANTHROPIC_DEFAULT_SONNET_MODEL=xxx)
+    if (params.env) {
+      for (const [key, value] of Object.entries(params.env)) {
+        settings.env[key] = value;
+      }
     }
 
     // Clean up erroneously-written top-level keys from prior buggy Appfit runs
     delete settings.provider;
     delete settings.apiKey;
     delete settings.baseUrl;
-    delete settings.model;
 
     await writeFile(configPath, JSON.stringify(settings, null, 2) + "\n");
   },

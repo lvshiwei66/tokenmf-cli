@@ -394,6 +394,139 @@ describe("use command — E2E", () => {
     });
   });
 
+  // ── Advanced Claude Code options ──────────────────────────
+
+  describe("advanced Claude Code options (--models, --env, --effort)", () => {
+    beforeEach(() => {
+      writeFileSync(
+        join(appDir, "settings.json"),
+        JSON.stringify({}),
+      );
+      vi.mocked(detectAllApps).mockReturnValue([makeClaudeCodeApp(appDir)]);
+    });
+
+    it("passes --models to settings.json as fallback chain", async () => {
+      await useCommand("packcode", {
+        key: "sk-test-key",
+        models: ["claude-sonnet-5", "claude-haiku-4-5"],
+        app: "claude-code",
+      }, TEST_API_URL, TEST_CLIENT_ID);
+
+      const result = JSON.parse(
+        readFileSync(join(appDir, "settings.json"), "utf-8"),
+      ) as Record<string, unknown>;
+      const env = result.env as Record<string, unknown>;
+      expect(env.ANTHROPIC_MODEL).toBe("claude-sonnet-5");
+      expect(result.model).toBe("claude-sonnet-5");
+      expect(result.fallbackModel).toEqual(["claude-haiku-4-5"]);
+    });
+
+    it("passes --effort to settings.json", async () => {
+      await useCommand("packcode", {
+        key: "sk-test-key",
+        model: "claude-sonnet-5",
+        effortLevel: "xhigh",
+        app: "claude-code",
+      }, TEST_API_URL, TEST_CLIENT_ID);
+
+      const result = JSON.parse(
+        readFileSync(join(appDir, "settings.json"), "utf-8"),
+      ) as Record<string, unknown>;
+      expect(result.effortLevel).toBe("xhigh");
+    });
+
+    it("passes --env to settings.json env block", async () => {
+      await useCommand("packcode", {
+        key: "sk-test-key",
+        model: "claude-sonnet-5",
+        env: {
+          ANTHROPIC_DEFAULT_SONNET_MODEL: "claude-sonnet-5-20250929",
+          ANTHROPIC_BETAS: "feature-x",
+        },
+        app: "claude-code",
+      }, TEST_API_URL, TEST_CLIENT_ID);
+
+      const result = JSON.parse(
+        readFileSync(join(appDir, "settings.json"), "utf-8"),
+      ) as Record<string, unknown>;
+      const env = result.env as Record<string, unknown>;
+      expect(env.ANTHROPIC_DEFAULT_SONNET_MODEL).toBe("claude-sonnet-5-20250929");
+      expect(env.ANTHROPIC_BETAS).toBe("feature-x");
+    });
+
+    it("success message includes new option details", async () => {
+      const { logs, restore } = captureLogs();
+      try {
+        await useCommand("packcode", {
+          key: "sk-test-key",
+          models: ["sonnet", "haiku"],
+          effortLevel: "high",
+          env: { ANTHROPIC_BETAS: "x" },
+          app: "claude-code",
+        }, TEST_API_URL, TEST_CLIENT_ID);
+
+        const successMsg = logs.find((l) => l.includes("Switched"));
+        expect(successMsg).toContain("model: sonnet");
+        expect(successMsg).toContain("fallback: [haiku]");
+        expect(successMsg).toContain("effort: high");
+        expect(successMsg).toContain("+1 env var(s)");
+      } finally {
+        restore();
+      }
+    });
+  });
+
+  // ── Advanced Codex options ────────────────────────────────
+
+  describe("advanced Codex options (--models, --effort, --env)", () => {
+    beforeEach(() => {
+      writeFileSync(
+        join(appDir, "config.toml"),
+        'model_provider = "openai"\nmodel = "gpt-5.1"\n',
+      );
+      vi.mocked(detectAllApps).mockReturnValue([makeCodexApp(appDir)]);
+    });
+
+    it("passes --models to config.toml (first model only)", async () => {
+      await useCommand("packcode", {
+        key: "sk-test-key",
+        models: ["model-a", "model-b"],
+        app: "codex",
+      }, TEST_API_URL, TEST_CLIENT_ID);
+
+      const newToml = readFileSync(join(appDir, "config.toml"), "utf-8");
+      const toml = parseToml(newToml) as Record<string, unknown>;
+      expect(toml.model).toBe("model-a");
+    });
+
+    it("passes --effort to config.toml", async () => {
+      await useCommand("packcode", {
+        key: "sk-test-key",
+        model: "deepseek-v4-pro",
+        effortLevel: "high",
+        app: "codex",
+      }, TEST_API_URL, TEST_CLIENT_ID);
+
+      const newToml = readFileSync(join(appDir, "config.toml"), "utf-8");
+      const toml = parseToml(newToml) as Record<string, unknown>;
+      expect(toml.model_reasoning_effort).toBe("high");
+    });
+
+    it("passes --env to config.toml (features)", async () => {
+      await useCommand("packcode", {
+        key: "sk-test-key",
+        model: "deepseek-v4-pro",
+        env: { "features.browser_use": "true" },
+        app: "codex",
+      }, TEST_API_URL, TEST_CLIENT_ID);
+
+      const newToml = readFileSync(join(appDir, "config.toml"), "utf-8");
+      const toml = parseToml(newToml) as Record<string, unknown>;
+      const features = toml.features as Record<string, unknown>;
+      expect(features.browser_use).toBe(true);
+    });
+  });
+
   // ── Provider memory ────────────────────────────────────────
 
   describe("provider memory (settings.json)", () => {

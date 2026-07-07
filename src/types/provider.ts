@@ -24,6 +24,12 @@ export interface UseParams {
   baseUrl: string;
   apiKey: string;
   model?: string;
+  /** Multiple models: first is primary (ANTHROPIC_MODEL), rest form fallback chain */
+  models?: string[];
+  /** Custom environment variables to merge into settings.json env block */
+  env?: Record<string, string>;
+  /** Effort level: low, medium, high, xhigh */
+  effortLevel?: string;
 }
 
 // --- Settings (stored in ~/.tmf/store/used.json) ---
