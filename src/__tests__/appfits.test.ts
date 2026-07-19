@@ -54,9 +54,9 @@ api_key = "sk-old"
       readFileSync(join(tmpDir, "config.toml"), "utf-8"),
     ) as Record<string, unknown>;
 
-    expect(result.model_provider).toBe("custom");
+    expect(result.model_provider).toBe("packcode");
     expect(result.model).toBe("deepseek-v4-pro");
-    const custom = (result.model_providers as Record<string, unknown>).custom as Record<string, unknown>;
+    const custom = (result.model_providers as Record<string, unknown>).packcode as Record<string, unknown>;
     expect(custom.name).toBe("packcode");
     expect(custom.base_url).toBe("https://api.deepseek.com/openai");
     expect(custom.api_key).toBe("sk-test-key-123");

@@ -6,6 +6,9 @@ const DETECTOR_CONFIGS: DetectorConfig[] = [
   { name: "codex", configDirName: ".codex", configFileName: "config.toml", configFormat: "toml", executableNames: ["codex"] },
   { name: "claude-code", configDirName: ".claude", configFileName: "settings.json", configFormat: "json", executableNames: ["claude"] },
   { name: "openclaw", configDirName: ".openclaw", configFileName: "config.yaml", configFormat: "yaml", executableNames: ["openclaw"] },
+  { name: "opencode", configDirName: ".opencode", configFileName: "config.json", configFormat: "json", executableNames: ["opencode"] },
+  { name: "hermes", configDirName: ".hermes", configFileName: "config.json", configFormat: "json", executableNames: ["hermes"] },
+  { name: "pi", configDirName: ".pi", configFileName: "config.json", configFormat: "json", executableNames: ["pi"] },
 ];
 
 export function detectAllApps(): AppConfig[] {

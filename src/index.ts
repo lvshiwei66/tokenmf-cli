@@ -10,8 +10,13 @@ import { askAction } from "./commands/ask.js";
 import { useCommand } from "./commands/use.js";
 import { rollbackCommand } from "./commands/rollback.js";
 import { registerTestCommand } from "./commands/test.js";
+import { setCommand } from "./commands/set.js";
+import { saveCommand } from "./commands/save.js";
+import { wrapCommand } from "./commands/wrap-command.js";
 import { getConfig, getApiUrl, CONFIG_PATH, loadSettings } from "./config/index.js";
 
+import { parseModels } from "./utils/parse-models.js";
+import { parseEnv } from "./utils/parse-env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,9 +37,8 @@ export function createProgram(): Command {
     .option("--models <models...>", "Multiple models (first is primary, rest are fallback chain)")
     .option("--env <env...>", "Custom env vars to set (KEY=VALUE format)")
     .option("--effort <level>", "Effort level: low, medium, high, xhigh")
-    .option("-a, --app <app>", "Target application: codex, claude-code (aliases: claude, cc), openclaw")
-    .action(async (provider, options) => {
-      try {
+    .option("-a, --app <app>", "Target application: codex, claude-code (claude, cc), openclaw, opencode, hermes, pi")
+.action(wrapCommand(async (provider, options) => {
         // Auto-run setup if config is missing（首次运行时自动初始化）
         let config = await getConfig(CONFIG_PATH);
         if (!config) {
@@ -45,95 +49,80 @@ export function createProgram(): Command {
         const apiUrl = getApiUrl(config);
         const settings = await loadSettings();
         const clientId = config?.fingerprint;
-        // Parse --env KEY=VALUE into a Record
-        const envRecord: Record<string, string> = {};
-        if (options.env) {
-          for (const entry of options.env as string[]) {
-            const eqIdx = entry.indexOf("=");
-            if (eqIdx > 0) {
-              envRecord[entry.slice(0, eqIdx).trim()] = entry.slice(eqIdx + 1).trim();
-            } else {
-              console.warn(`⚠ Ignoring malformed --env entry: "${entry}" (expected KEY=VALUE)`);
-            }
-          }
-        }
+        const envRecord = parseEnv((options.env as string[]) ?? []);
 
         // Parse --models: support both positional and key=value formats
-        let roleModels: Record<string, string> | undefined;
-        let models: string[] | undefined;
-        if (options.models && (options.models as string[]).length > 0) {
-          const raw = options.models as string[];
-          // Key=value format: --models opus=X,sonnet=Y,haiku=Z
-          const kvParts = raw.flatMap((entry) => entry.split(",").map((s) => s.trim()).filter(Boolean));
-          const kvMap: Record<string, string> = {};
-          let hasKv = false;
-          for (const part of kvParts) {
-            const eqIdx = part.indexOf("=");
-            if (eqIdx > 0) {
-              const key = part.slice(0, eqIdx).trim().toLowerCase();
-              const value = part.slice(eqIdx + 1).trim();
-              if (key === "opus" || key === "sonnet" || key === "haiku") {
-                kvMap[key] = value;
-                hasKv = true;
-              } else {
-                console.warn(`⚠ Ignoring unknown model role "${key}" in --models. Expected: opus, sonnet, haiku`);
-              }
-            }
-          }
-
-          if (hasKv) {
-            roleModels = kvMap;
-            // Primary model: first role available in opus > sonnet > haiku order
-            const primary = kvMap.opus ?? kvMap.sonnet ?? kvMap.haiku;
-            if (primary) {
-              models = [primary];
-              // Build fallback chain: remaining distinct models
-              const seen = new Set([primary]);
-              const fallbacks: string[] = [];
-              for (const m of [kvMap.opus, kvMap.sonnet, kvMap.haiku]) {
-                if (m && !seen.has(m)) {
-                  fallbacks.push(m);
-                  seen.add(m);
-                }
-              }
-              if (fallbacks.length > 0) models.push(...fallbacks);
-            }
-          } else {
-            // Positional: --models <opus> <sonnet> <haiku>
-            if (raw.length >= 1) roleModels = { opus: raw[0] };
-            if (raw.length >= 2) roleModels = { ...roleModels, sonnet: raw[1] };
-            if (raw.length >= 3) roleModels = { ...roleModels, haiku: raw[2] };
-            // Primary model: first (opus), strongest
-            const primary = raw[0];
-            models = [primary];
-            // Fallbacks: distinct remaining models in order
-            const seen = new Set([primary]);
-            for (let i = 1; i < raw.length; i++) {
-              if (!seen.has(raw[i])) {
-                models.push(raw[i]);
-                seen.add(raw[i]);
-              }
-            }
-          }
-        }
+        const parsedModels = parseModels((options.models as string[]) ?? []);
 
         await useCommand(provider, {
           key: options.key,
           model: options.model,
-          models,
-          roleModels,
+          models: parsedModels.models,
+          roleModels: parsedModels.roleModels,
           env: Object.keys(envRecord).length > 0 ? envRecord : undefined,
           effortLevel: options.effort,
           app: options.app,
         }, apiUrl, clientId);
-      } catch (error) {
-        console.error(
-          "❌ Error:",
-          error instanceof Error ? error.message : String(error),
-        );
-        process.exit(1);
-      }
-    });
+    }));
+
+  // ── set ─────────────────────────────────────────────────────
+  program
+    .command("set <app>")
+    .description("Directly configure an AI application with custom parameters")
+    .option("--baseUrl <url>", "Base URL for the API endpoint")
+    .option("-k, --key <api-key>", "API Key")
+    .option("-m, --model <model>", "Model name (single model)")
+    .option("--models <models...>", "Multiple models: opus=X,sonnet=Y,haiku=Z or positional")
+    .option("--env <env...>", "Custom env vars to set (KEY=VALUE format)")
+    .option("--effort <level>", "Effort level: low, medium, high, xhigh")
+    .option("--save-as <name>", "Save parameters as a reusable template")
+.action(wrapCommand(async (app, options) => {
+        const envRecord = parseEnv((options.env as string[]) ?? []);
+
+        // Parse --models
+        const parsedModels = parseModels((options.models as string[]) ?? []);
+
+        await setCommand(app, {
+          baseUrl: options.baseUrl,
+          key: options.key,
+          model: options.model,
+          models: parsedModels.models,
+          roleModels: parsedModels.roleModels,
+          env: Object.keys(envRecord).length > 0 ? envRecord : undefined,
+          effort: options.effort,
+          saveAs: options.saveAs,
+        });
+    }));
+
+  // ── save ─────────────────────────────────────────────────────
+  program
+    .command("save <name>")
+    .description("Save a parameter template for later reuse")
+    .option("--app <app>", "Target application")
+    .option("--baseUrl <url>", "Base URL for the API endpoint")
+    .option("-k, --key <api-key>", "API Key")
+    .option("-m, --model <model>", "Model name (single model)")
+    .option("--models <models...>", "Multiple models: opus=X,sonnet=Y,haiku=Z or positional")
+    .option("--env <env...>", "Custom env vars to set (KEY=VALUE format)")
+    .option("--effort <level>", "Effort level: low, medium, high, xhigh")
+.action(wrapCommand(async (name, options) => {
+        const envRecord = parseEnv((options.env as string[]) ?? []);
+
+        // Parse --models
+        const parsedModels = parseModels((options.models as string[]) ?? []);
+
+        await saveCommand(name, {
+          app: options.app,
+          baseUrl: options.baseUrl,
+          key: options.key,
+          model: options.model,
+          models: parsedModels.models,
+          roleModels: parsedModels.roleModels,
+          env: Object.keys(envRecord).length > 0 ? envRecord : undefined,
+          effort: options.effort,
+        });
+    }));
+
 
   // ── list ────────────────────────────────────────────────────
   program
@@ -186,17 +175,9 @@ export function createProgram(): Command {
     .command("rollback")
     .description("Restore application config from backup")
     .option("-a, --app <app>", "Target application: codex, claude-code (aliases: claude, cc), openclaw")
-    .action(async (options) => {
-      try {
+.action(wrapCommand(async (options) => {
         await rollbackCommand({ app: options.app });
-      } catch (error) {
-        console.error(
-          "Error:",
-          error instanceof Error ? error.message : String(error),
-        );
-        process.exit(1);
-      }
-    });
+    }));
   // ── test ─────────────────────────────────────────────────────
   registerTestCommand(program);
 

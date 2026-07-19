@@ -58,6 +58,24 @@ export interface Settings {
   clientId?: string;
 }
 
+// --- Templates (stored in ~/.tmf/templates.json) ---
+
+export interface Template {
+  name: string;
+  app?: string;
+  baseUrl: string;
+  apiKey: string;
+  model?: string;
+  /** Multiple models: first is primary, rest form fallback chain */
+  models?: string[];
+  /** Model assignments by role (haiku, sonnet, opus) */
+  roleModels?: RoleModels;
+  /** Custom environment variables */
+  env?: Record<string, string>;
+  /** Effort level: low, medium, high, xhigh */
+  effortLevel?: string;
+}
+
 // --- Test command types ---
 
 export interface TestParams {

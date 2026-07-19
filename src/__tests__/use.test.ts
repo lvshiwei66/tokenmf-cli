@@ -183,7 +183,7 @@ describe("use command — E2E", () => {
         // Config rewritten
         const newToml = readFileSync(join(appDir, "config.toml"), "utf-8");
         expect(newToml).toContain("packcode");
-        expect(newToml).toContain("custom");
+        expect(newToml).toContain("packcode");
 
         // auth.json created
         expect(existsSync(join(appDir, "auth.json"))).toBe(true);
@@ -872,7 +872,7 @@ describe("use command — E2E", () => {
 
       await expect(
         useCommand("packcode", { key: "sk-test", app: "claude-code" }, TEST_API_URL, TEST_CLIENT_ID),
-      ).rejects.toThrow(/not found/);
+      ).rejects.toThrow(/installation not detected/);
     });
 
     it("applies to all apps when --app not specified", async () => {
@@ -1036,9 +1036,9 @@ describe("use command — E2E", () => {
         },
       ]);
 
-
-      await useCommand("packcode", { key: "sk-test", app: "unknown-app" }, TEST_API_URL, TEST_CLIENT_ID);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Unsupported"));
+      await expect(
+        useCommand("packcode", { key: "sk-test", app: "unknown-app" }, TEST_API_URL, TEST_CLIENT_ID),
+      ).rejects.toThrow(/Unknown application/);
       warnSpy.mockRestore();
     });
   });

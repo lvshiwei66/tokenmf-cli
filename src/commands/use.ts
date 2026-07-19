@@ -1,13 +1,17 @@
-import { copyFile } from "node:fs/promises";
+import { applyWithBackup } from "./apply-backup.js";
 import { detectAllApps } from "../detectors/index.js";
 import {
   loadSettings,
   saveSettings,
   getProviderMemory,
   setProviderMemory,
+  loadTemplates,
+  getTemplate,
 } from "../config/index.js";
+import type { Template } from "../types/provider.js";
+
 import { fetchProviderInfo } from "../providers/api.js";
-import { getAppfit, resolveAppName } from "../appfits/index.js";
+import { getAppfit, resolveAppName, getSupportedAppNames } from "../appfits/index.js";
 import type { UseParams, ProviderDetail, RoleModels } from "../types/provider.js";
 import type { AppConfig } from "../detectors/types.js";
 
@@ -72,9 +76,8 @@ export function selectApp(
   if (providedApp) {
     const canonicalName = resolveAppName(providedApp);
     if (!canonicalName) {
-      const names = apps.map((a) => a.name).join("、");
       throw new Error(
-        `Unknown application "${providedApp}". Available: codex, claude-code (claude, cc), openclaw.`,
+        `Unknown application "${providedApp}". Available: ${getSupportedAppNames()}.`,
       );
     }
     const app = apps.find((a) => a.name === canonicalName);
@@ -88,7 +91,7 @@ export function selectApp(
 
   if (apps.length === 0) {
     throw new Error(
-      "No installed AI applications detected. Please install Codex, Claude Code, or OpenClaw first.",
+      `No installed AI applications detected. Supported apps: ${getSupportedAppNames()}.`,
     );
   }
 
@@ -102,12 +105,74 @@ export function selectApp(
   );
 }
 
+
+/**
+ * Apply a saved template to target app(s).
+ * CLI options override template values (--app, --key, --model, etc.).
+ */
+async function applyTemplate(
+  templateName: string,
+  template: Template,
+  options: { key?: string; model?: string; models?: string[]; roleModels?: RoleModels; env?: Record<string, string>; effortLevel?: string; app?: string },
+): Promise<void> {
+  const allApps = detectAllApps();
+  const targetAppName = options.app ?? template.app;
+  const targets: AppConfig[] = targetAppName
+    ? [selectApp(targetAppName, allApps)]
+    : allApps;
+
+  if (targets.length === 0) {
+    throw new Error("No installed applications detected. Please install an AI application first.");
+  }
+
+  // Merge: CLI options override template values
+  const apiKey = options.key ?? template.apiKey;
+  const model = options.model ?? template.model;
+  const models = options.models ?? template.models;
+  const roleModels = options.roleModels ?? template.roleModels;
+  const env = options.env ?? template.env;
+  const effortLevel = options.effortLevel ?? template.effortLevel;
+
+  for (const app of targets) {
+    const appfit = getAppfit(app.name);
+    if (!appfit) {
+      console.warn(`⚠ Unsupported application: ${app.name}, skipped.`);
+      continue;
+    }
+
+    const params: UseParams = {
+      provider: templateName,
+      baseUrl: template.baseUrl,
+      apiKey,
+      model,
+      models,
+      roleModels,
+      env,
+      effortLevel,
+    };
+
+    await applyWithBackup(
+      app,
+      appfit,
+      params,
+      `Template "${templateName}" applied to ${app.name}`,
+    );
+  }
+}
 export async function useCommand(
   provider: string,
   options: { key?: string; model?: string; models?: string[]; roleModels?: RoleModels; env?: Record<string, string>; effortLevel?: string; app?: string },
   apiUrl: string,
   clientId?: string,
 ): Promise<void> {
+  // 0. Check templates first
+  const templateStore = await loadTemplates();
+  const template = getTemplate(templateStore, provider);
+  if (template) {
+    await applyTemplate(provider, template, options);
+    return;
+  }
+
   // 1. Load settings and provider memory
   const settings = await loadSettings();
   let memory = getProviderMemory(settings, provider);
@@ -180,18 +245,6 @@ export async function useCommand(
       continue;
     }
 
-    // Backup
-    const configPaths = appfit.resolveConfigPaths(app.path);
-    for (const configPath of configPaths) {
-      try {
-        await copyFile(configPath, configPath + ".bak");
-      } catch (e: unknown) {
-        const code = (e as NodeJS.ErrnoException)?.code;
-        if (code !== "ENOENT") throw e;
-      }
-    }
-
-    // Apply
     const params: UseParams = {
       provider,
       baseUrl: resolvedUrl,
@@ -203,22 +256,12 @@ export async function useCommand(
       effortLevel: options.effortLevel,
     };
 
-    try {
-      await appfit.apply(app.path, params);
-    } catch (error) {
-      throw new Error(
-        `Failed to modify ${app.name} config: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-
-    const parts: string[] = [`✅ Switched ${app.name} to ${provider}`];
-    if (model) parts.push(`model: ${model}`);
-    if (options.models && options.models.length > 1) parts.push(`fallback: [${options.models.slice(1).join(", ")}]`);
-    if (options.effortLevel) parts.push(`effort: ${options.effortLevel}`);
-    const envCount = options.env ? Object.keys(options.env).length : 0;
-    if (envCount > 0) parts.push(`+${envCount} env var(s)`);
-    parts.push("Please restart the application.");
-    console.log(parts.join(". "));
+    await applyWithBackup(
+      app,
+      appfit,
+      params,
+      `Switched ${app.name} to ${provider}`,
+    );
   }
 
   // 7. Update memory (shared across all apps)

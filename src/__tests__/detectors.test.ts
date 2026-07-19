@@ -8,6 +8,7 @@ vi.mock("node:fs", async () => {
   const actual = await vi.importActual<typeof fs>("node:fs");
   return {
     ...actual,
+    accessSync: vi.fn(),
     existsSync: vi.fn(actual.existsSync),
   };
 });
@@ -59,7 +60,7 @@ describe("detectAllApps", () => {
   it("returns detected apps when config files exist", () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const apps = detectAllApps();
-    expect(apps).toHaveLength(3);
-    expect(apps.map((a) => a.name).sort()).toEqual(["claude-code", "codex", "openclaw"]);
+    expect(apps).toHaveLength(6);
+    expect(apps.map((a) => a.name).sort()).toEqual(["claude-code", "codex", "hermes", "openclaw", "opencode", "pi"]);
   });
 });

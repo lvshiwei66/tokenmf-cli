@@ -1,6 +1,8 @@
 import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
+import type { Template } from "../types/provider.js";
+
 
 export { getFingerprint, getClientId } from "../utils/fingerprint.js";
 
@@ -35,7 +37,9 @@ const CONFIG_DIR = join(homedir(), ".tmf");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 const SETTINGS_PATH = join(CONFIG_DIR, "store", "used.json");
 
-export { CONFIG_DIR, CONFIG_PATH };
+const TEMPLATES_PATH = join(CONFIG_DIR, "templates.json");
+
+export { CONFIG_DIR, CONFIG_PATH, TEMPLATES_PATH };
 
 // ── Config I/O ───────────────────────────────────────────────
 
@@ -113,4 +117,49 @@ export function setProviderMemory(
   memory: ProviderMemory,
 ): void {
   settings.providers[providerName] = memory;
+}
+
+// ── Template I/O ──────────────────────────────────────────────
+
+export interface TemplateStore {
+  templates: Record<string, Template>;
+}
+
+export async function loadTemplates(): Promise<TemplateStore> {
+  try {
+    const raw = await readFile(TEMPLATES_PATH, "utf-8");
+    const parsed = JSON.parse(raw) as Partial<TemplateStore>;
+    return { templates: parsed.templates ?? {} };
+  } catch {
+    return { templates: {} };
+  }
+}
+
+export async function saveTemplates(store: TemplateStore): Promise<void> {
+  await mkdir(dirname(TEMPLATES_PATH), { recursive: true });
+  const tmpPath = TEMPLATES_PATH + ".tmp";
+  await writeFile(tmpPath, JSON.stringify(store, null, 2));
+  await rename(tmpPath, TEMPLATES_PATH);
+}
+
+export function getTemplate(
+  store: TemplateStore,
+  name: string,
+): Template | undefined {
+  return store.templates[name];
+}
+
+export function setTemplate(
+  store: TemplateStore,
+  template: Template,
+): void {
+  store.templates[template.name] = template;
+}
+
+export function deleteTemplate(store: TemplateStore, name: string): boolean {
+  if (store.templates[name]) {
+    delete store.templates[name];
+    return true;
+  }
+  return false;
 }

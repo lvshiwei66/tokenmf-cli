@@ -250,7 +250,7 @@ describe("rollback command", () => {
     it("throws when specified app not installed", async () => {
       vi.mocked(detectAllApps).mockReturnValue([makeCodexApp(appDir)]);
 
-      await expect(rollbackCommand({ app: "claude-code" })).rejects.toThrow(/not found/);
+      await expect(rollbackCommand({ app: "claude-code" })).rejects.toThrow(/installation not detected/);
     });
 
     it("throws when no apps installed", async () => {
