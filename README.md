@@ -16,17 +16,10 @@ After installation, the `tmf` command is available:
 tmf --help
 ```
 
-### File I/O Permissions
-
-`tmf` requires the following filesystem permissions:
-
-- **Read** `~/.codex/`, `~/.claude/`, `~/.openclaw/` and other AI app config directories for automatic app detection
-- **Write** `~/.tmf/` directory for saving detection reports and runtime configuration
-- **Read/Write** target application config files (creates `.bak` backups during `use` / `rollback`)
-
-Run as a normal user to avoid `sudo` causing config file permission issues.
 
 ## Usage
+`tmf set` directly configures any provider without needing the Provider API — just pass `--baseUrl`, `--key`, and `--model`.
+
 
 ```bash
 # Show help
@@ -57,3 +50,7 @@ tmf test openai
 # Query provider details
 tmf ask openai
 ```
+
+---
+Documentation: [tokenmf.com](https://tokenmf.com)
+
